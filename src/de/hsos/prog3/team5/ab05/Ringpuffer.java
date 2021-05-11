@@ -16,17 +16,22 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     // definiert die maximale Anzahl der Elemente des Puffers
     private int capacity;
     // legt fest, ob die Kapazität vergrößert werden darf
-    private boolean fixedCapacity;
+    private boolean fixedCapacity = true;
     //  legt fest, ob Elemente überschrieben werden dürfen
-    private boolean discarding;
+    private boolean discarding = false;
     // Faktor der Vergrößerung
-    private int faktor = 5;
+    private int faktor = 5; //?
+
+
 
     //TODO: fixedCapacity und discarding dürfen nicht beide true sein (lt. Aufgabenstellung)
-    public <T> Ringpuffer(int capacity, boolean fixedCapacity, boolean discarding ){
+    public <T> Ringpuffer(int capacity, boolean expandableCapacity, boolean discarding ){
+        if (!expandableCapacity && discarding) {
+            this.discarding = true;
+        }else if (expandableCapacity && !discarding) {
+            this.fixedCapacity = false;
+        }
         this.capacity = capacity;
-        this.fixedCapacity = fixedCapacity;
-        this.discarding = discarding;
         elements = new ArrayList<>(capacity);
         // assign null Objects
         for (int i = 0; i < capacity; i++){
@@ -37,25 +42,18 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 //------------DEQUE Utilities---------------
     @Override
     public void addFirst(T t) {
-        if(size < capacity){
-            elements.set(head,t);
-            head++;
-            //falls !( ueberschrieben werden darf und das erste element schon vorhanden):
-            //size hochzaehlen
-            if (!(discarding && elements.get(head) != null)){
-                size++;
-            }
-        }else {
+        if(size < capacity) {
+            insertHelp(t);
+        }
+        else{
             throw new IllegalStateException();
         }
     }
 
     @Override
     public T removeFirst() {
-        if (size > tail) {
-            T tmp = elements.get(tail);
-            tail++;
-            return tmp;
+        if (size >= tail) {
+            return removeFirstHelp();
         }else{
             throw new IllegalStateException();
         }
@@ -64,7 +62,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     @Override
     public T getFirst() {
         if (size > tail){
-            return elements.get(tail);
+            return peekHelp(tail);
         }else{
             throw new IllegalStateException();
         }
@@ -73,7 +71,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     @Override
     public boolean offerFirst(T t) {
         if (size < capacity) {
-            addFirst(t);
+            insertHelp(t);
             return true;
         } else
             return false;
@@ -82,7 +80,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     @Override
     public T pollFirst() {
         if (size > tail) {
-            return removeFirst();
+            return removeFirstHelp();
         }
         return null;
     }
@@ -90,39 +88,44 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     @Override
     public T peekFirst() {
         if (size > tail){
-            return getFirst();
+            return peekHelp(tail);
         }else{
             return null;
         }
     }
 
-//TODO: wie realisiert man das last? wir haben ja nur zwei pointer...
+
     @Override
-    public void addLast(T t) {
-        if(size < capacity){
-            elements.set(capacity - 1, t);
-            //falls !( ueberschrieben werden darf und das letzte element schon vorhanden):
-            //size hochzaehlen
-            if (!(discarding && elements.get(capacity-1) != null)){
-                size++;
-            }
+    public void addLast(T t) {  //same as addfirst
+        if(size < capacity) {
+            insertHelp(t);
+        }
+        else{
+            throw new IllegalStateException();
         }
     }
 
     @Override
     public T removeLast() {
-        return null;
+        if (size < head){
+            return removeLastHelp();
+        }else {
+            throw new IllegalStateException();
+        }
     }
 
     @Override
     public T getLast() {
-        return null;
-    }
+        if (size > head){
+            return peekHelp(head-1);
+        }else{
+            throw new IllegalStateException();
+        }    }
 
     @Override
     public boolean offerLast(T t) {
         if (size < capacity) {
-            addLast(t);
+            insertHelp(t);
             return true;
         } else
             return false;
@@ -130,13 +133,21 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public T pollLast() {
+        if (size > head) {
+            return removeLastHelp();
+        }
         return null;
     }
 
     @Override
     public T peekLast() {
-        return null;
+        if (size > head){
+            return peekHelp(head-1);
+        }else{
+            return null;
+        }
     }
+
     @Override
     public boolean removeFirstOccurrence(Object o) {
         return false;
@@ -147,17 +158,56 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         return false;
     }
 //----------------HILFSMETHODEN-----------------
-    private void insert(int i){
-
+    private void insertHelp(T t){
+        elements.set(head,t);
+        //falls !( ueberschrieben werden darf und das erste element schon vorhanden):
+        //size hochzaehlen
+        if (!(discarding && elements.get(head) != null)){
+            size++;
+        }
+        head++;
     }
+    private T removeFirstHelp(){
+        T tmp = elements.get(tail);
+        tail++;
+        return tmp;
+    }
+    private T removeLastHelp(){
+        T tmp = elements.get(head-1);
+        head--;
+        return tmp;
+    }
+    private T peekHelp(int tail){
+        return elements.get(tail);
+    }
+
+    /*
+    //pruefe, dass nicht sowohl das flag fuers ueberschreiben, als auch fuers Kapazitaet erhoehen true sind
+    //wenn doch, wird es behandelt als ob keins von beiden
+
+    private int pruefeVerhalten(boolean fixCap, boolean discard) {
+        if (!fixCap && discard) {
+            return 1;   //ueberschreiben
+        }else if (fixCap && !discard) {
+            return 2;   //Kapazitaet erhoehen
+        }else {
+            return 0;   //keins von beiden/beides
+        }
+    }
+*/
+
 
 //------------------QUEUE Utilities--------------
 
     // füge element in tail hinzu
     @Override
     public boolean add(T t) {
-        addLast(t);
-        return true;
+        try {
+            addLast(t);
+            return true;
+        }catch (IllegalStateException e){
+            throw new IllegalStateException();
+        }
         /*
         // wenn es voll ist
         if (size == capacity)
@@ -222,7 +272,11 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 //-------------------STACK---------------------------
     @Override
     public void push(T t) {
-        addFirst(t);
+        try {
+            addFirst(t);
+        }catch (IllegalStateException e){
+            throw new IllegalStateException();
+        }
         /*
         // wenn es voll ist
         if (size == capacity)
