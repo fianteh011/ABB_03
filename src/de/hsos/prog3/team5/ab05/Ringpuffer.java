@@ -5,6 +5,7 @@ import java.util.*;
 
 
 public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Cloneable {
+
     private ArrayList<T> elements = new ArrayList<>();
     // definiert die End-Position des Puffers
     private int head = 0;
@@ -21,6 +22,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     // Faktor der Vergrößerung
     private int faktor = 5;
 
+    //TODO: fixedCapacity und discarding dürfen nicht beide true sein (lt. Aufgabenstellung)
     public <T> Ringpuffer(int capacity, boolean fixedCapacity, boolean discarding ){
         this.capacity = capacity;
         this.fixedCapacity = fixedCapacity;
@@ -32,17 +34,40 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         }
 
     }
-
+//------------DEQUE Utilities---------------
     @Override
     public void addFirst(T t) {
-        if(size < capacity)
-            elements.set(0,t);
+        if(size < capacity){
+            elements.set(head,t);
+            head++;
+            //falls !( ueberschrieben werden darf und das erste element schon vorhanden):
+            //size hochzaehlen
+            if (!(discarding && elements.get(head) != null)){
+                size++;
+            }
+        }else {
+            throw new IllegalStateException();
+        }
     }
 
     @Override
-    public void addLast(T t) {
-        if(size < capacity)
-            elements.set(capacity - 1, t);
+    public T removeFirst() {
+        if (size > tail) {
+            T tmp = elements.get(tail);
+            tail++;
+            return tmp;
+        }else{
+            throw new IllegalStateException();
+        }
+    }
+
+    @Override
+    public T getFirst() {
+        if (size > tail){
+            return elements.get(tail);
+        }else{
+            throw new IllegalStateException();
+        }
     }
 
     @Override
@@ -55,43 +80,37 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     }
 
     @Override
-    public boolean offerLast(T t) {
-        if (size < capacity) {
-            addLast(t);
-            return true;
-        } else
-            return false;
+    public T pollFirst() {
+        if (size > tail) {
+            return removeFirst();
+        }
+        return null;
     }
 
     @Override
-    public T removeFirst() {
-        if (size > 0) {
-            tail++;
-            return elements.get(0);
+    public T peekFirst() {
+        if (size > tail){
+            return getFirst();
+        }else{
+            return null;
         }
-        return null;
+    }
+
+//TODO: wie realisiert man das last? wir haben ja nur zwei pointer...
+    @Override
+    public void addLast(T t) {
+        if(size < capacity){
+            elements.set(capacity - 1, t);
+            //falls !( ueberschrieben werden darf und das letzte element schon vorhanden):
+            //size hochzaehlen
+            if (!(discarding && elements.get(capacity-1) != null)){
+                size++;
+            }
+        }
     }
 
     @Override
     public T removeLast() {
-        return null;
-    }
-
-    @Override
-    public T pollFirst() {
-        if (size > 0) {
-            return elements.get(0);
-        }
-        return null;
-    }
-
-    @Override
-    public T pollLast() {
-        return null;
-    }
-
-    @Override
-    public T getFirst() {
         return null;
     }
 
@@ -101,7 +120,16 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     }
 
     @Override
-    public T peekFirst() {
+    public boolean offerLast(T t) {
+        if (size < capacity) {
+            addLast(t);
+            return true;
+        } else
+            return false;
+    }
+
+    @Override
+    public T pollLast() {
         return null;
     }
 
@@ -109,7 +137,6 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     public T peekLast() {
         return null;
     }
-
     @Override
     public boolean removeFirstOccurrence(Object o) {
         return false;
@@ -119,10 +146,19 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     public boolean removeLastOccurrence(Object o) {
         return false;
     }
+//----------------HILFSMETHODEN-----------------
+    private void insert(int i){
+
+    }
+
+//------------------QUEUE Utilities--------------
 
     // füge element in tail hinzu
     @Override
     public boolean add(T t) {
+        addLast(t);
+        return true;
+        /*
         // wenn es voll ist
         if (size == capacity)
             if (fixedCapacity == true) {
@@ -156,59 +192,38 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
             return true;
         }
         ++size;
-        return true;
+        return true;*/
     }
 
     @Override
     public boolean offer(T t) {
-        return false;
+        return offerLast(t);
     }
 
     @Override
     public T remove() {
-        return null;
+        return removeFirst();
     }
 
     @Override
     public T poll() {
-        if (elements.isEmpty()) {
-            return null;
-        }
-        return remove();
+        return pollFirst();
     }
 
     @Override
     public T element() {
-        return null;
+        return getFirst();
     }
-
+//-------------------STACK AND QUEUE-----------------
     @Override
     public T peek() {
-        return elements.get(tail);
+        return peekFirst();
     }
-
-    @Override
-    public boolean addAll(Collection<? extends T> c) {
-        return false;
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public void clear() {
-
-    }
-
+//-------------------STACK---------------------------
     @Override
     public void push(T t) {
+        addFirst(t);
+        /*
         // wenn es voll ist
         if (size == capacity)
             if (fixedCapacity == true) {
@@ -242,12 +257,35 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
             return;
         }
         ++size;
+        */
+
     }
 
     @Override
     public T pop() {
-        return remove();
+        return removeFirst();
     }
+//-----------------------------------------------------
+    @Override
+    public boolean addAll(Collection<? extends T> c) {
+        return false;
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        return false;
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        return false;
+    }
+
+    @Override
+    public void clear() {
+
+    }
+
 
     @Override
     public boolean remove(Object o) {
