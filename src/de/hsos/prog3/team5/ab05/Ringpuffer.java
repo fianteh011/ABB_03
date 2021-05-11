@@ -11,6 +11,8 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     private int head = 0;
     // definiert die Anfangs-Position des Puffers
     private int tail = 0;
+    //
+    private int tailLifo = 0;
     // definiert die Anzahl der tatsächlich verwalteten Elemente
     private int size = 0;
     // definiert die maximale Anzahl der Elemente des Puffers
@@ -42,10 +44,9 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 //------------DEQUE Utilities---------------
     @Override
     public void addFirst(T t) {
-        if(size < capacity) {
-            insertHelp(t);
-        }
-        else{
+        if (this.size <= this.capacity) {
+            this.insertLastHelp(t);
+        } else {
             throw new IllegalStateException();
         }
     }
@@ -53,6 +54,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     @Override
     public T removeFirst() {
         if (size >= tail) {
+            System.out.println(this.tail);
             return removeFirstHelp();
         }else{
             throw new IllegalStateException();
@@ -97,10 +99,9 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public void addLast(T t) {  //same as addfirst
-        if(size < capacity) {
-            insertHelp(t);
-        }
-        else{
+        if (size <= capacity) {
+            insertLastHelp(t);
+        } else {
             throw new IllegalStateException();
         }
     }
@@ -124,8 +125,8 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public boolean offerLast(T t) {
-        if (size < capacity) {
-            insertHelp(t);
+        if (size <= capacity) {
+            insertLastHelp(t);
             return true;
         } else
             return false;
@@ -133,7 +134,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public T pollLast() {
-        if (size > head) {
+        if (size >= head) {
             return removeLastHelp();
         }
         return null;
@@ -150,6 +151,12 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public boolean removeFirstOccurrence(Object o) {
+        for (int i = 0; i < capacity; i++) {
+            if (this.elements.get(i).equals(o)) {
+                this.elements.remove(i);
+                return true;
+            }
+        }
         return false;
     }
 
@@ -162,14 +169,31 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         elements.set(head,t);
         //falls !( ueberschrieben werden darf und das erste element schon vorhanden):
         //size hochzaehlen
-        if (!(discarding && elements.get(head) != null)){
+        if (size < capacity) {
             size++;
         }
-        head++;
+        if (head == capacity - 1) {
+            if (!fixedCapacity) {
+                this.capacity += faktor;
+                for (int i = 0; i < faktor; i++) {
+                    elements.add(null);
+                }
+                head++;
+            } else if (discarding) {
+                head = 0;
+            } else {
+                System.out.println("Maximale Groesse erreicht, Elemente werden nicht ueberschrieben");
+            }
+        } else {
+            head++;
+        }
     }
     private T removeFirstHelp(){
         T tmp = elements.get(tail);
-        tail++;
+        this.tail++;
+        if (tail == capacity) {
+            this.tail = 0;
+        }
         return tmp;
     }
     private T removeLastHelp(){
@@ -180,21 +204,6 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     private T peekHelp(int tail){
         return elements.get(tail);
     }
-
-    /*
-    //pruefe, dass nicht sowohl das flag fuers ueberschreiben, als auch fuers Kapazitaet erhoehen true sind
-    //wenn doch, wird es behandelt als ob keins von beiden
-
-    private int pruefeVerhalten(boolean fixCap, boolean discard) {
-        if (!fixCap && discard) {
-            return 1;   //ueberschreiben
-        }else if (fixCap && !discard) {
-            return 2;   //Kapazitaet erhoehen
-        }else {
-            return 0;   //keins von beiden/beides
-        }
-    }
-*/
 
 
 //------------------QUEUE Utilities--------------
@@ -208,41 +217,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         }catch (IllegalStateException e){
             throw new IllegalStateException();
         }
-        /*
-        // wenn es voll ist
-        if (size == capacity)
-            if (fixedCapacity == true) {
-                // Wenn wir Elemente nicht überschreiben können, dann exception
-                if (discarding == false)
-                    throw new IllegalStateException("Elemente dürfen nicht überschrieben werden!");
-            }
-            // Wenn die Kapazität nicht festgelegt ist,dann fügen den Faktor hinzu
-            else {
-                capacity += faktor;
-                for (int i = 0; i < capacity; i++){
-                    elements.add(null);
-                }
-            }
-        // wenn size = 0 (leer)
-        if (size == 0){
-            elements.set(tail, t);
-        }else{
-            --tail;
-            if(tail == -1){
-                tail = capacity - 1;
-            }
-            elements.set(tail, t);
-        }
-        // wenn size == capacity, dann tail soll bewegen
-        if (size == capacity){
-            --head;
-            if (head == -1) {
-                head = capacity - 1;
-            }
-            return true;
-        }
-        ++size;
-        return true;*/
+
     }
 
     @Override
@@ -277,7 +252,142 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         }catch (IllegalStateException e){
             throw new IllegalStateException();
         }
-        /*
+    }
+
+    @Override
+    public T pop() {
+        return removeLast();
+    }
+//-----------------------------------------------------
+    @Override
+    public boolean addAll(Collection<? extends T> c) {
+        return this.elements.addAll(c);
+
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        return this.elements.removeAll(c);
+
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        return this.elements.retainAll(c);
+    }
+
+    @Override
+    public void clear() {
+
+    }
+
+
+    @Override
+    public boolean remove(Object o) {
+        return removeFirstOccurrence(o);
+    }
+
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        return this.elements.containsAll(c);
+    }
+
+    @Override
+    public boolean contains(Object o) {
+        return this.elements.contains(o);
+    }
+
+    @Override
+    public int size() {
+        // gibt die tatsächlich Menge an Elemente zurück
+        return this.size;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        for (int i = 0; i < this.capacity; i++) {
+            if (this.elements.get(i) != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return elements.iterator();
+    }
+
+    @Override
+    public Object[] toArray() {
+        return elements.toArray();
+    }
+
+    @Override
+    public <T1> T1[] toArray(T1[] a) {
+        return elements.toArray(a);
+    }
+
+    @Override
+    public Iterator<T> descendingIterator() {
+        return elements.iterator();
+    }
+}
+
+
+
+    /*
+    //pruefe, dass nicht sowohl das flag fuers ueberschreiben, als auch fuers Kapazitaet erhoehen true sind
+    //wenn doch, wird es behandelt als ob keins von beiden
+
+    private int pruefeVerhalten(boolean fixCap, boolean discard) {
+        if (!fixCap && discard) {
+            return 1;   //ueberschreiben
+        }else if (fixCap && !discard) {
+            return 2;   //Kapazitaet erhoehen
+        }else {
+            return 0;   //keins von beiden/beides
+        }
+    }
+*/
+
+ /*
+        // wenn es voll ist
+        if (size == capacity)
+            if (fixedCapacity == true) {
+                // Wenn wir Elemente nicht überschreiben können, dann exception
+                if (discarding == false)
+                    throw new IllegalStateException("Elemente dürfen nicht überschrieben werden!");
+            }
+            // Wenn die Kapazität nicht festgelegt ist,dann fügen den Faktor hinzu
+            else {
+                capacity += faktor;
+                for (int i = 0; i < capacity; i++){
+                    elements.add(null);
+                }
+            }
+        // wenn size = 0 (leer)
+        if (size == 0){
+            elements.set(tail, t);
+        }else{
+            --tail;
+            if(tail == -1){
+                tail = capacity - 1;
+            }
+            elements.set(tail, t);
+        }
+        // wenn size == capacity, dann tail soll bewegen
+        if (size == capacity){
+            --head;
+            if (head == -1) {
+                head = capacity - 1;
+            }
+            return true;
+        }
+        ++size;
+        return true;*/
+
+  /*
         // wenn es voll ist
         if (size == capacity)
             if (fixedCapacity == true) {
@@ -312,77 +422,3 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         }
         ++size;
         */
-
-    }
-
-    @Override
-    public T pop() {
-        return removeFirst();
-    }
-//-----------------------------------------------------
-    @Override
-    public boolean addAll(Collection<? extends T> c) {
-        return false;
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public void clear() {
-
-    }
-
-
-    @Override
-    public boolean remove(Object o) {
-        return false;
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public boolean contains(Object o) {
-        return false;
-    }
-
-    @Override
-    public int size() {
-        return 0;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return elements.isEmpty();
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-        return elements.iterator();
-    }
-
-    @Override
-    public Object[] toArray() {
-        return elements.toArray();
-    }
-
-    @Override
-    public <T1> T1[] toArray(T1[] a) {
-        return elements.toArray(a);
-    }
-
-    @Override
-    public Iterator<T> descendingIterator() {
-        return elements.iterator();
-    }
-}
