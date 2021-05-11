@@ -1,5 +1,9 @@
 package de.hsos.prog3.team5.ab05;
 
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.function.Consumer;
 import java.io.Serializable;
 import java.util.*;
 
@@ -21,13 +25,13 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     // Faktor der Vergrößerung
     private int faktor = 5;
 
-    public <T> Ringpuffer(int capacity, boolean fixedCapacity, boolean discarding ){
+    public <T> Ringpuffer(int capacity, boolean fixedCapacity, boolean discarding) {
         this.capacity = capacity;
         this.fixedCapacity = fixedCapacity;
         this.discarding = discarding;
         elements = new ArrayList<>(capacity);
         // assign null Objects
-        for (int i = 0; i < capacity; i++){
+        for (int i = 0; i < capacity; i++) {
             elements.add(null);
         }
 
@@ -35,13 +39,13 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public void addFirst(T t) {
-        if(size < capacity)
-            elements.set(0,t);
+        if (size < capacity)
+            elements.set(0, t);
     }
 
     @Override
     public void addLast(T t) {
-        if(size < capacity)
+        if (size < capacity)
             elements.set(capacity - 1, t);
     }
 
@@ -133,22 +137,22 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
             // Wenn die Kapazität nicht festgelegt ist,dann fügen den Faktor hinzu
             else {
                 capacity += faktor;
-                for (int i = 0; i < capacity; i++){
+                for (int i = 0; i < capacity; i++) {
                     elements.add(null);
                 }
             }
         // wenn size = 0 (leer)
-        if (size == 0){
+        if (size == 0) {
             elements.set(tail, t);
-        }else{
+        } else {
             --tail;
-            if(tail == -1){
+            if (tail == -1) {
                 tail = capacity - 1;
             }
             elements.set(tail, t);
         }
         // wenn size == capacity, dann tail soll bewegen
-        if (size == capacity){
+        if (size == capacity) {
             --head;
             if (head == -1) {
                 head = capacity - 1;
@@ -219,22 +223,22 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
             // Wenn die Kapazität nicht festgelegt ist,dann fügen den Faktor hinzu
             else {
                 capacity += faktor;
-                for (int i = 0; i < capacity; i++){
+                for (int i = 0; i < capacity; i++) {
                     elements.add(null);
                 }
             }
         // wenn size = 0 (leer)
-        if (size == 0){
+        if (size == 0) {
             elements.set(head, t);
-        }else{
+        } else {
             ++head;
-            if(head == capacity){
+            if (head == capacity) {
                 head = 0;
             }
             elements.set(head, t);
         }
         // wenn size == capacity, dann tail soll bewegen
-        if (size == capacity){
+        if (size == capacity) {
             ++tail;
             if (tail == capacity) {
                 tail = 0;
