@@ -242,7 +242,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 //-------------------STACK AND QUEUE-----------------
     @Override
     public T peek() {
-        return peekFirst();
+        return peekLast();
     }
 //-------------------STACK---------------------------
     @Override
@@ -278,7 +278,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public void clear() {
-
+        this.elements.clear();
     }
 
 
