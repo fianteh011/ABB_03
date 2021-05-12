@@ -2,20 +2,21 @@ package de.hsos.prog3.team5.ab05;
 
 public class App {
     public static void main(String[] args) {
-        Ringpuffer<String> flugschreiber = new Ringpuffer<String>(4, 5, false, true);
+        Ringpuffer<String> flugschreiber = new Ringpuffer<String>(6, 5, false, true);
 
-            flugschreiber.add("New York");
-            flugschreiber.add("New Jersey");
-            flugschreiber.add("London");
-            flugschreiber.add("Paris");
-            flugschreiber.add("dummy1");
-            flugschreiber.add("dummy2");
-            flugschreiber.add("dummy3");
-            flugschreiber.add("dummy5");
-            flugschreiber.add("dummy6");
-            flugschreiber.add("dummy7");
-            flugschreiber.add("dummy8");
-            flugschreiber.add("dummy9");
+        flugschreiber.add("New York");
+        flugschreiber.add("New Jersey");
+        flugschreiber.add("London");
+        flugschreiber.add("Paris");
+//        flugschreiber.add(null);
+        flugschreiber.add("dummy1");
+        flugschreiber.add("dummy2");
+        flugschreiber.add("dummy3");
+        flugschreiber.add("dummy4");
+//        flugschreiber.add("dummy6");
+//        flugschreiber.add("dummy7");
+//        flugschreiber.add("dummy8");
+//        flugschreiber.add("dummy9");
 
         for (int i = 0; i < flugschreiber.size(); i++) {
             System.out.println(flugschreiber.remove());
@@ -30,6 +31,7 @@ public class App {
         buecherstapel.push("BuchA");
         buecherstapel.push("BuchB");
         buecherstapel.push("BuchC");
+//        buecherstapel.push(null);
         System.out.println(buecherstapel.pop());
         System.out.println(buecherstapel.pop());
         System.out.println(buecherstapel.pop());
@@ -39,10 +41,10 @@ public class App {
         //FIFO-Beispiel, Kapazitaet fix
         Ringpuffer<String> warteschlangeAnDerKasse = new Ringpuffer<>(5, 3, false, false);
 
-            warteschlangeAnDerKasse.add("KundeA");
-            warteschlangeAnDerKasse.add("KundeB");
-            warteschlangeAnDerKasse.add("KundeC");
-            warteschlangeAnDerKasse.add("KundeD");
+        warteschlangeAnDerKasse.add("KundeA");
+        warteschlangeAnDerKasse.add("KundeB");
+        warteschlangeAnDerKasse.add("KundeC");
+        warteschlangeAnDerKasse.add("KundeD");
 //            warteschlangeAnDerKasse.add("KundeX");
 
 
@@ -51,7 +53,6 @@ public class App {
         System.out.println(warteschlangeAnDerKasse.remove());
         System.out.println(warteschlangeAnDerKasse.remove());
 //        System.out.println(warteschlangeAnDerKasse.remove());
-
 
 
     }

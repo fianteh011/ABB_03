@@ -11,7 +11,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     private int head = 0;
     // definiert die Anfangs-Position des Puffers
     private int tail = 0;
-    //
+    // eine Art "Pointer" für die Tail
     private int tailLifo = 0;
     // definiert die Anzahl der tatsächlich verwalteten Elemente
     private int size = 0;
@@ -54,9 +54,9 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public T removeFirst() {
-        if (size >= tail) {
+        if (this.size >= this.tail) {
             System.out.println(this.tail);
-            return removeFirstHelp();
+            return this.removeFirstHelp();
         } else {
             throw new IllegalStateException();
         }
@@ -64,8 +64,8 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public T getFirst() {
-        if (size > tail) {
-            return peekHelp(tail);
+        if (this.size > this.tail) {
+            return this.peekHelp(this.tail);
         } else {
             throw new IllegalStateException();
         }
@@ -73,7 +73,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public boolean offerFirst(T t) {
-        if (size <= capacity) {
+        if (this.size <= this.capacity) {
             this.insertLastHelp(t);
             return true;
         } else
@@ -82,16 +82,16 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public T pollFirst() {
-        if (size > tail) {
-            return removeFirstHelp();
+        if (this.size > this.tail) {
+            return this.removeFirstHelp();
         }
         return null;
     }
 
     @Override
     public T peekFirst() {
-        if (size > tail) {
-            return peekHelp(tail);
+        if (this.size > this.tail) {
+            return this.peekHelp(this.tail);
         } else {
             return null;
         }
@@ -100,8 +100,8 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public void addLast(T t) {  //same as addfirst
-        if (size <= capacity) {
-            insertLastHelp(t);
+        if (this.size <= this.capacity) {
+            this.insertLastHelp(t);
         } else {
             throw new IllegalStateException();
         }
@@ -109,7 +109,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public T removeLast() {
-        if (size <= head) {
+        if (this.size <= this.head) {
             return removeLastHelp();
         } else {
             throw new IllegalStateException();
@@ -188,24 +188,31 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
             if (!fixedCapacity) {
                 this.capacity += faktor;
                 for (int i = 0; i < faktor; i++) {
-                    elements.add(null);
+                    this.elements.add(null);
                 }
-                head++;
-            } else if (discarding) {
-                head = 0;
+                this.head++;
+            } else if (this.discarding) {
+                //falls ueberschrieben werden soll
+                //setze head wieder auf 0 (Ring voll)
+                this.head = 0;
             } else {
                 System.out.println("Maximale Groesse erreicht, Elemente werden nicht ueberschrieben");
             }
         } else {
-            head++;
+            this.head++;
         }
     }
 
 
     private T removeFirstHelp() {
-        T tmp = elements.get(tail);
+        /*
+         * HilfsMethode zum Lesen des ersten Elements in der Liste
+         */
+        T tmp = this.elements.get(this.tail);
+        // Beim Lesen des Elements wird zuerst die Tail als nächstes versetzt
         this.tail++;
-        if (tail == capacity) {
+
+        if (this.tail == this.capacity) {
             this.tail = 0;
         }
         return tmp;
@@ -217,8 +224,9 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         return tmp;
     }
 
-    private T peekHelp(int tail) {
-        return elements.get(tail);
+    //Hilfsmethode fuer die Peek-Methoden
+    private T peekHelp(int _tail) {
+        return this.elements.get(_tail);
     }
 
 
@@ -228,7 +236,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     @Override
     public boolean add(T t) {
         try {
-            addLast(t);
+            this.addLast(t);
             return true;
         } catch (IllegalStateException e) {
             throw new IllegalStateException();
@@ -238,39 +246,39 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public boolean offer(T t) {
-        return offerLast(t);
+        return this.offerLast(t);
     }
 
     @Override
     public T remove() {
-        return removeFirst();
+        return this.removeFirst();
     }
 
     @Override
     public T poll() {
-        return pollFirst();
+        return this.pollFirst();
     }
 
     @Override
     public T element() {
-        return getFirst();
+        return this.getFirst();
     }
 
     //-------------------STACK AND QUEUE-----------------
     @Override
     public T peek() {
-        return peekLast();
+        return this.peekLast();
     }
 
     //-------------------STACK---------------------------
     @Override
     public void push(T t) {
         try {
-            addFirst(t);
-            if (head != 0) {
-                tailLifo = head - 1;
+            this.addFirst(t);
+            if (this.head != 0) {
+                this.tailLifo = this.head - 1;
             } else {
-                tailLifo = this.capacity - 1;
+                this.tailLifo = this.capacity - 1;
             }
         } catch (IllegalStateException e) {
             throw new IllegalStateException();
@@ -308,7 +316,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public boolean remove(Object o) {
-        return removeFirstOccurrence(o);
+        return this.removeFirstOccurrence(o);
     }
 
     @Override
@@ -345,17 +353,17 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
 
     @Override
     public Object[] toArray() {
-        return elements.toArray();
+        return this.elements.toArray();
     }
 
     @Override
-    public <T1> T1[] toArray(T1[] a) {
-        return elements.toArray(a);
+    public <T> T[] toArray(T[] a) {
+        return this.elements.toArray(a);
     }
 
     @Override
     public Iterator<T> descendingIterator() {
-        return elements.iterator();
+        return this.elements.iterator();
     }
 }
 
