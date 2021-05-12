@@ -1,5 +1,9 @@
 package de.hsos.prog3.team5.ab05;
 
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.function.Consumer;
 import java.io.Serializable;
 import java.util.*;
 
@@ -32,6 +36,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         } else if (expandableCapacity && !discarding) {
             this.fixedCapacity = false;
         }
+
         this.capacity = capacity;
         this.faktor = faktor;
         this.elements = new ArrayList<>(capacity);
@@ -39,12 +44,12 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         for (int i = 0; i < capacity; i++) {
             this.elements.add(null);
         }
-
     }
 
     //------------DEQUE Utilities---------------
     @Override
     public void addFirst(T t) {
+
         if (this.size <= this.capacity) {
             this.insertLastHelp(t);
         } else {
@@ -60,6 +65,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         } else {
             throw new IllegalStateException();
         }
+
     }
 
     @Override
@@ -176,6 +182,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         return false;
     }
 
+
     //----------------HILFSMETHODEN-----------------
     private void insertLastHelp(T t) {
         elements.set(head, t);
@@ -189,6 +196,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
                 this.capacity += faktor;
                 for (int i = 0; i < faktor; i++) {
                     this.elements.add(null);
+
                 }
                 this.head++;
             } else if (this.discarding) {
@@ -237,6 +245,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     public boolean add(T t) {
         try {
             this.addLast(t);
+
             return true;
         } catch (IllegalStateException e) {
             throw new IllegalStateException();
@@ -306,6 +315,7 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
     @Override
     public boolean retainAll(Collection<?> c) {
         return this.elements.retainAll(c);
+
     }
 
     @Override
@@ -455,3 +465,4 @@ public class Ringpuffer<T> implements Deque<T>, RandomAccess, Serializable, Clon
         }
         ++size;
         */
+
