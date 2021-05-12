@@ -20,6 +20,8 @@ public class App {
         for (int i = 0; i < flugschreiber.size(); i++) {
             System.out.println(flugschreiber.remove());
         }
+        System.out.println("----------------------------------------------");
+        System.out.println("LIFO Beispiel - variable capacity");
         //LIFO-Beispiel, Kapazitaet variierend
         Ringpuffer<String> buecherstapel = new Ringpuffer<>(5, 3, true, false);
 
@@ -32,6 +34,8 @@ public class App {
         System.out.println(buecherstapel.pop());
         System.out.println(buecherstapel.pop());
 
+        System.out.println("----------------------------------------------");
+        System.out.println("FIFO Beispiel - fix capacity");
         //FIFO-Beispiel, Kapazitaet fix
         Ringpuffer<String> warteschlangeAnDerKasse = new Ringpuffer<>(5, 3, false, false);
 
@@ -39,14 +43,14 @@ public class App {
             warteschlangeAnDerKasse.add("KundeB");
             warteschlangeAnDerKasse.add("KundeC");
             warteschlangeAnDerKasse.add("KundeD");
-            warteschlangeAnDerKasse.add("KundeX");
+//            warteschlangeAnDerKasse.add("KundeX");
 
 
         System.out.println(warteschlangeAnDerKasse.remove());
         System.out.println(warteschlangeAnDerKasse.remove());
         System.out.println(warteschlangeAnDerKasse.remove());
         System.out.println(warteschlangeAnDerKasse.remove());
-        System.out.println(warteschlangeAnDerKasse.remove());
+//        System.out.println(warteschlangeAnDerKasse.remove());
 
 
 
